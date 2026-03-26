@@ -64,7 +64,24 @@ bool connectWifi() {
 void sendData(float temp, float hum){
   HTTPClient http;
 
-  String url = ""
+  String url = "http://"+String(serverIP)+
+    "update?temp=" + String(temp,1) +
+    "&hum" + String(hum,1);
+  
+  Serial.println("[HTTP]Enviando: ");
+  Serial.println(url);
+  http.begin(url);
+  http.setTimeout(3000); //3 segs
+
+  int httpCode = http.GET();
+  if (httpCode > 0){
+    Serial.println("[HTTP]Resposta: ");
+    Serial,println(payload);
+  }else{
+    Serial.println("[HTTP]ERROR: ");
+    Serial.println(httpCode);
+  }
+  http.end();
 }
 
 void setup() {

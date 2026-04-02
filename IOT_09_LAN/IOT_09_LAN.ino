@@ -8,8 +8,8 @@
 #include <WebServer.h> //Ativação de servidor web
 
 //Variáveis
-const char* ssid = "nome da rede";
-const char* password ="senha";
+const char* ssid = "IoT-B08";
+const char* password ="12345678";
 
 
 //login http
@@ -17,7 +17,7 @@ const char* http_user = "admin";
 const char* http_password = "1234";
 
 //Iniciando servidor
-Webserver server(80);
+WebServer server(80);
 
 //LED
 const int LED_PIN=2; // Declarando GPIO 2
@@ -35,7 +35,7 @@ bool wifiConnected = false;
 //---------------------
 bool isAuthenticated(){
   if (!server.authenticate(http_user, http_password)){
-    server.requestAuthenticator();
+    server.requestAuthentication();
     return false;
   }
   return false;
@@ -49,31 +49,34 @@ String buildPage(){
   html += "<meta charset = 'utf-8'>";
   html += "<meta name= 'viewport' content='width-device-width'>";
   html += "<title>ESP32</title>";
+
   html += "<style>";
   html += "body{font-family:sans-serif; text-align:center;padding:40px background:#f4f4f4}";
+  html += "button{padding:16px 32px;font-size:18px;border:none;border-radius:8px;margin:8px}";
   html += ".on{background:#009d00; color:#f4f4f4}";
   html += ".off{background#43208;color:#f4f4f4}";
+  html += "</style";
+
   html += "</head><body>";
 
   html += "<h1>Comunicação LAN das amizades</h1>";
   html += "<p>Status <strong>";
-  html += (ledState) ? "LIGADO" : "DESLIGADO";
-  html += </strong></p>;
+  html += (ledState ? "LIGADO" : "DESLIGADO");
+  html += "</strong></p>";
 
   html += "<hr>";
 
   //botões
-  html += "<a href = '/on'><button class='on'>LIGAR</button></a>"
-  html += "<a href = '/off'><button class='off'>DESLIGAR</button></a>"
+  html += "<a href = '/on'><button class='on'>LIGAR</button></a>";
+  html += "<a href = '/off'><button class='off'>DESLIGAR</button></a>";
 
   //Retorno dos dados de TEMPERATURA
   html += "<h2>SENSOR DHT11</h2>";
-  html += "<h2>Temperatura: ";
+  html += "<p>Temperatura: ";
   html += String(temperatura);
-  html += "%</p>"
+  html += "%°C</p>";
 
   //retorno dos dados de UMIDADE
-  html += "<h2> SENSOR DHT11</H2>";
   html += "<p>Umidade: ";
   html += String(umidade);
   html += "%</p>";
@@ -81,25 +84,25 @@ String buildPage(){
   html += "</body><html>";
 
 
-  return html
+  return html;
 
 }
 
 //___________________
 // WIFI
 //___________________
-bool connectWifi(){
+bool connectWiFi(){
   Serial.println("\nWifi connect... Resetando a interface");
 
-  Wifi.disconnect(true);
+  WiFi.disconnect(true);
 
   delay(1000);
 
-  Wifi.mode(WIFI_STA);
-  Wifi.begin(ssid, password);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
 
   Serial.println("[Wifi] conectando...");
-  Serial.print("[Wifi] SSID: ")
+  Serial.print("[Wifi] SSID: ");
   Serial.println(ssid);
 
   int tentativas = 0; //contador de tentativas de conexão na rede
@@ -116,7 +119,7 @@ bool connectWifi(){
     Serial.println("[WIFI] IP: ");
     Serial.println(WiFi.localIP()); // Retorna o IP, aqui acessaremos o servidor no navegador
 
-    return true
+    return true;
   }else{
     Serial.println("\n[WIFI] Falha na conexão");
     return false;
@@ -141,7 +144,7 @@ void setupRoutes(){
     Serial.println("LED Ligado");
     server.sendHeader("Location", "/");
     server.send(303);
-  })
+  });
 
   //DESLIGAR O LED
   server.on("/off", [](){
@@ -169,7 +172,7 @@ void setupRoutes(){
     Serial.println(temperatura);
     Serial.println("Umidade: ");
     Serial.println(umidade);
-    server.send(200,"text/plain", OK);
+    server.send(200,"text/plain", "OK");
   });
 }
 
@@ -179,11 +182,11 @@ void setupRoutes(){
 void setup() {
   Serial.begin(115200); //Importante checar se a sua placa não segue o 9600
   delay(1000);
-  Serial.println("\n[BOOT] Inicializando o ESP32...")
-  pintMode(LED_PINT,OUTPUT);
+  Serial.println("\n[BOOT] Inicializando o ESP32...");
+  pinMode(LED_PIN,OUTPUT);
   digitalWrite(LED_PIN,LOW);
 
-  wifiConnected = connectWifi();
+  wifiConnected = connectWiFi();
   setupRoutes();
 
   if(wifiConnected){
